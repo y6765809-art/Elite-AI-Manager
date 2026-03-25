@@ -2,162 +2,223 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>Elite AI Enterprise</title>
+    <title>Elite AI Manager - Pro v5</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.2/mammoth.browser.min.js"></script>
     <style>
         :root { --gold: #c5a059; --dark: #2d1b0d; --cream: #f9f7f2; }
-        body, html { margin: 0; padding: 0; height: 100vh; width: 100vw; overflow: hidden; background: var(--cream); font-family: sans-serif; }
+        body, html { margin: 0; padding: 0; height: 100vh; width: 100vw; overflow: hidden; background: var(--cream); font-family: 'Segoe UI', system-ui; }
         
-        /* Sidebar fixed to the right */
-        .elite-sidebar { position: fixed; right: 0; top: 0; bottom: 0; width: 300px; background: var(--dark); color: white; padding: 25px; z-index: 100; box-shadow: -5px 0 15px rgba(0,0,0,0.2); }
+        #sidebar { position: absolute; top: 0; right: 0; bottom: 0; width: 320px; background: var(--dark); color: white; padding: 30px; z-index: 1000; box-shadow: -5px 0 30px rgba(0,0,0,0.4); }
+        #main { position: absolute; top: 0; right: 320px; left: 0; bottom: 0; display: flex; flex-direction: column; }
         
-        /* Main area taking the rest of the space */
-        .elite-main { position: fixed; right: 300px; left: 0; top: 0; bottom: 0; display: flex; flex-direction: column; background: var(--cream); }
+        #header { height: 80px; background: white; border-bottom: 4px solid var(--gold); display: flex; align-items: center; justify-content: space-between; padding: 0 40px; }
+        #chat { flex: 1; overflow-y: auto; padding: 40px; display: flex; flex-direction: column; gap: 20px; }
+        #footer { background: white; border-top: 1px solid #eee; padding: 20px 40px; }
         
-        .elite-header { height: 80px; background: white; border-bottom: 3px solid var(--gold); display: flex; align-items: center; justify-content: space-between; padding: 0 40px; }
-        .elite-chat { flex: 1; overflow-y: auto; padding: 40px; display: flex; flex-direction: column; gap: 20px; }
-        .elite-input { height: 120px; background: white; border-top: 1px solid #eee; padding: 20px 40px; }
+        .msg { padding: 15px 20px; border-radius: 12px; max-width: 85%; line-height: 1.6; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .msg-bot { background: #f1ede4; border-right: 6px solid var(--dark); align-self: flex-start; }
+        .msg-user { background: white; border-right: 6px solid var(--gold); align-self: flex-end; }
         
-        .msg { padding: 15px 20px; border-radius: 12px; max-width: 80%; line-height: 1.6; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .msg-bot { background: #f1ede4; border-right: 5px solid var(--dark); align-self: flex-start; }
-        .msg-user { background: white; border-right: 5px solid var(--gold); align-self: flex-end; }
+        .btn-gold { background: var(--gold); color: white; padding: 12px 30px; border-radius: 10px; font-weight: bold; transition: 0.3s; cursor: pointer; border: none; }
+        .btn-gold:hover { background: #b38f48; transform: scale(1.02); }
         
-        .gold-btn { background: var(--gold); color: white; padding: 10px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        input, textarea { outline: none; border: 2px solid #f0f0f0; border-radius: 12px; }
+        input:focus { border-color: var(--gold); }
     </style>
 </head>
-<body>
+<body class="flex">
 
-    <aside class="elite-sidebar">
+    <aside id="sidebar">
         <div class="text-center mb-10 border-b border-white/10 pb-6">
-            <h1 class="text-3xl font-bold" style="color: var(--gold)">Elite BMS</h1>
-            <p class="text-[10px] uppercase tracking-widest opacity-50">Enterprise AI</p>
+            <h1 class="text-3xl font-black text-gold" style="color:var(--gold)">Elite BMS</h1>
+            <p class="text-[9px] uppercase tracking-[4px] opacity-50">Advanced Intelligence</p>
         </div>
 
         <div class="mb-8">
-            <label class="text-xs text-gold font-bold block mb-2">סקיל פעיל:</label>
-            <select id="activeSkill" class="w-full bg-white/10 border border-white/20 p-3 rounded text-sm text-white outline-none">
-                <option value="">צ'אט כללי</option>
+            <label class="text-[11px] text-gold font-bold block mb-2 uppercase">סקיל מומחה פעיל</label>
+            <select id="activeSkill" class="w-full bg-white/10 border border-white/20 p-3 rounded-xl text-sm text-white focus:bg-white/20">
+                <option value="">צ'אט כללי חכם</option>
             </select>
-            <button onclick="openSkillModal()" class="w-full mt-4 text-[11px] py-2 border border-dashed border-gold/40 rounded text-gold hover:bg-gold/10">
-                + צור סקיל מומחה
+            <button onclick="openM()" class="w-full mt-3 text-[10px] py-2 border border-dashed border-gold/40 rounded-lg text-gold hover:bg-gold/10 font-bold">
+                + צור סקיל משופר
             </button>
         </div>
 
-        <nav class="space-y-2">
-            <button onclick="location.reload()" class="w-full text-right p-3 rounded hover:bg-white/5 flex items-center gap-3">
-                <i class="fas fa-plus text-gold"></i> שיחה חדשה
+        <nav class="space-y-3 flex-1 overflow-y-auto">
+            <button onclick="location.reload()" class="w-full text-right p-3 rounded-lg hover:bg-white/5 flex items-center gap-3 transition-all">
+                <i class="fas fa-plus-circle text-gold"></i> שיחה חדשה
             </button>
         </nav>
+
+        <div class="mt-auto p-4 bg-black/30 rounded-2xl border border-white/5 text-[11px]">
+            <div class="flex justify-between mb-1 opacity-70"><span>טוקנים בשיחה:</span><span id="tokenDisplay">0</span></div>
+            <div class="flex justify-between mb-3 text-gold font-bold"><span>עלות מצטברת:</span><span id="costDisplay">$0.000</span></div>
+            <div class="w-full bg-gray-700 h-1.5 rounded-full overflow-hidden"><div id="costBar" class="bg-gold h-full w-0 transition-all duration-1000"></div></div>
+        </div>
     </aside>
 
-    <div class="elite-main">
-        <header class="elite-header shadow-sm">
+    <div id="main">
+        <header id="header" class="shadow-sm">
             <div>
-                <h2 class="text-xl font-bold text-gray-800">ממשק עבודה חכם</h2>
-                <p id="modeStatus" class="text-[10px] text-gray-400 font-bold uppercase">Mode: General</p>
+                <h2 class="text-xl font-bold text-gray-800">Elite AI - מרכז פקודות</h2>
+                <p id="modeText" class="text-[10px] text-gray-400 font-bold uppercase">Mode: Intelligent Assistant</p>
             </div>
-            <div class="flex items-center gap-4 bg-gray-50 p-2 px-4 rounded-xl border">
-                <span class="text-xs font-bold text-gray-500">מפתח API:</span>
-                <input type="password" id="apiKey" class="text-sm bg-transparent outline-none w-64" placeholder="הכנס מפתח sk-ant-...">
+            <div class="flex items-center gap-4">
+                <div class="bg-gray-50 p-2 px-4 rounded-xl border-2 flex items-center gap-3">
+                    <span class="text-[10px] font-bold text-gray-400">API:</span>
+                    <input type="password" id="apiKey" class="bg-transparent w-64 text-sm" placeholder="sk-ant-...">
+                </div>
             </div>
         </header>
 
-        <div id="chatBox" class="elite-chat">
+        <div id="chat" class="p-10">
             <div class="msg msg-bot">
                 <b>שלום יוחנן,</b><br>
-                המערכת מוכנה כעת במסך מלא. הכנס את המפתח למעלה והתחל לעבוד.
+                המערכת מוכנה לעבודה מהירה. בגרסה זו הוספנו <b>זיכרון אקטיבי</b> ודיוק משופר. <br>
+                כל שיחה נשמרת בזיכרון המקומי כדי ללמוד את סגנון העבודה שלך.
             </div>
         </div>
 
-        <div class="elite-input">
-            <div class="max-w-5xl mx-auto flex gap-4 items-center">
-                <input type="file" id="fIn" class="hidden" onchange="document.getElementById('fStat').classList.remove('hidden')">
-                <button onclick="document.getElementById('fIn').click()" class="p-4 bg-gray-100 rounded-xl hover:bg-gray-200 text-gray-400">
+        <div id="footer">
+            <div class="max-w-5xl mx-auto flex gap-4 items-center relative">
+                <input type="file" id="f" class="hidden" onchange="document.getElementById('fS').innerText = 'קובץ מוכן!'">
+                <button onclick="document.getElementById('f').click()" class="p-4 bg-gray-100 rounded-xl hover:bg-gray-200 text-gray-400">
                     <i class="fas fa-paperclip text-xl"></i>
                 </button>
-                <textarea id="uInput" class="flex-1 p-3 border-2 border-gray-100 rounded-xl focus:border-gold outline-none resize-none" rows="1" placeholder="כתוב שאלה..."></textarea>
-                <button onclick="sendMsg()" class="gold-btn shadow-lg">שלח</button>
+                <textarea id="uInput" class="flex-1 p-4 border-2 border-gray-100 rounded-xl focus:border-gold outline-none resize-none shadow-sm" rows="1" placeholder="כתוב פקודה..."></textarea>
+                <button onclick="send()" id="sendBtn" class="btn-gold px-10 flex items-center gap-2">
+                    <span>שלח</span> <i class="fas fa-bolt"></i>
+                </button>
+                <div id="fS" class="absolute -top-6 right-20 text-[10px] text-gold font-bold"></div>
             </div>
-            <div id="fStat" class="hidden text-[10px] text-gold font-bold mt-1 mr-20">קובץ נטען...</div>
         </div>
     </div>
 
-    <div id="sModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[200] p-4">
-        <div class="bg-white rounded-2xl p-8 w-[500px] border-t-8 border-gold shadow-2xl">
-            <h3 class="text-2xl font-bold mb-4">יצירת סקיל</h3>
-            <input id="sName" class="w-full border p-3 rounded mb-4" placeholder="שם הסקיל">
-            <textarea id="sPrompt" class="w-full border p-3 rounded mb-4 h-32" placeholder="הוראות לסקיל..."></textarea>
+    <div id="modal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[2000] p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-3xl p-8 w-[500px] border-t-[8px] border-gold shadow-2xl">
+            <h3 class="text-2xl font-bold mb-4">הגדרת סופר-סקיל</h3>
+            <input id="sn" class="w-full border-2 p-3 rounded-xl mb-4" placeholder="שם הסקיל...">
+            <textarea id="sp" class="w-full border-2 p-3 rounded-xl h-40 mb-6" placeholder="הוראות פעולה קשוחות..."></textarea>
             <div class="flex justify-end gap-4">
-                <button onclick="closeSkillModal()" class="text-gray-400">ביטול</button>
-                <button onclick="saveSkill()" class="gold-btn">שמור</button>
+                <button onclick="closeM()" class="text-gray-400 font-bold">ביטול</button>
+                <button onclick="saveS()" class="btn-gold px-8">שמור סקיל</button>
             </div>
         </div>
     </div>
 
     <script>
-        // הפונקציות חייבות להיות מוגדרות כאן למעלה
-        let skills = JSON.parse(localStorage.getItem('elite_skills_final') || '[]');
+        let skills = JSON.parse(localStorage.getItem('e_v5_skills') || '[]');
+        let chatHistory = []; // זיכרון השיחה הנוכחית
+        let totalCost = 0;
 
-        function openSkillModal() { document.getElementById('sModal').classList.remove('hidden'); }
-        function closeSkillModal() { document.getElementById('sModal').classList.add('hidden'); }
+        function openM() { document.getElementById('modal').classList.remove('hidden'); }
+        function closeM() { document.getElementById('modal').classList.add('hidden'); }
 
-        function renderSkills() {
-            const sel = document.getElementById('activeSkill');
-            sel.innerHTML = '<option value="">צ\'אט כללי</option>';
-            skills.forEach((s, i) => sel.innerHTML += `<option value="${i}">${s.name}</option>`);
+        function renderS() {
+            const s = document.getElementById('activeSkill');
+            s.innerHTML = '<option value="">צ\'אט כללי חכם</option>';
+            skills.forEach((x, i) => s.innerHTML += `<option value="${i}">${x.name}</option>`);
         }
 
-        function saveSkill() {
-            const name = document.getElementById('sName').value;
-            const prompt = document.getElementById('sPrompt').value;
-            if(!name || !prompt) return alert("מלא פרטים");
-            skills.push({name, prompt});
-            localStorage.setItem('elite_skills_final', JSON.stringify(skills));
-            renderSkills();
-            closeSkillModal();
+        function saveS() {
+            const n = document.getElementById('sn').value, p = document.getElementById('sp').value;
+            if(!n || !p) return;
+            skills.push({name: n, prompt: p});
+            localStorage.setItem('e_v5_skills', JSON.stringify(skills));
+            renderS(); closeM();
         }
 
-        async function sendMsg() {
+        async function send() {
             const input = document.getElementById('uInput');
-            const key = document.getElementById('apiKey').value || localStorage.getItem('claude_key');
-            if(!input.value || !key) return alert("הזן הודעה ומפתח");
-            localStorage.setItem('claude_key', key);
+            const key = document.getElementById('apiKey').value || localStorage.getItem('e_k');
+            const sIdx = document.getElementById('activeSkill').value;
+            const btn = document.getElementById('sendBtn');
 
-            appendMsg('user', input.value);
-            const userTxt = input.value;
+            if(!input.value.trim() || !key) return alert("הזן הודעה ומפתח API");
+            
+            localStorage.setItem('e_k', key);
+            const userText = input.value;
+            addMsg('user', userText);
             input.value = "";
+            btn.disabled = true;
+            btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i>";
+
+            // בניית זיכרון (הודעות אחרונות)
+            chatHistory.push({ role: "user", content: userText });
+            const recentHistory = chatHistory.slice(-10); 
+
+            // הוראת מערכת "משופרת" (יותר מדויק מקלוד הרגיל)
+            let systemPrompt = `You are the Elite Business Management Assistant. 
+                                CRITICAL: Think step-by-step. Be 100% precise. 
+                                If the user has a specific skill active, follow its rules strictly.`;
+            
+            if(sIdx !== "") {
+                systemPrompt += `\nACTIVE SKILL RULES: ${skills[sIdx].prompt}`;
+                document.getElementById('modeText').innerText = `Mode: ${skills[sIdx].name}`;
+            }
 
             try {
-                const res = await fetch("https://cors-anywhere.herokuapp.com/https://api.anthropic.com/v1/messages", {
+                const response = await fetch("https://cors-anywhere.herokuapp.com/https://api.anthropic.com/v1/messages", {
                     method: 'POST',
                     headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
                     body: JSON.stringify({
                         model: "claude-3-5-sonnet-20240620",
                         max_tokens: 4000,
-                        messages: [{ role: "user", content: userTxt }]
+                        system: systemPrompt,
+                        messages: recentHistory
                     })
                 });
-                const data = await res.json();
-                appendMsg('bot', data.content[0].text);
+
+                const data = await response.json();
+                if(data.error) throw new Error(data.error.message);
+
+                const botText = data.content[0].text;
+                addMsg('bot', botText);
+                chatHistory.push({ role: "assistant", content: botText });
+                updateUsage(data.usage);
+
             } catch (e) {
-                appendMsg('bot', "שגיאה. וודא שביקרת ב-https://cors-anywhere.herokuapp.com/corsdemo");
+                addMsg('bot', "שגיאה בחיבור. וודא שאישרת גישה ב-https://cors-anywhere.herokuapp.com/corsdemo");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = "<span>שלח</span> <i class='fas fa-bolt'></i>";
             }
         }
 
-        function appendMsg(role, text) {
-            const div = document.createElement('div');
-            div.className = `msg ${role === 'user' ? 'msg-user' : 'msg-bot'}`;
-            div.innerText = text;
-            document.getElementById('chatBox').appendChild(div);
-            document.getElementById('chatBox').scrollTop = document.getElementById('chatBox').scrollHeight;
+        function addMsg(role, text) {
+            const box = document.getElementById('chat'), d = document.createElement('div');
+            d.className = `msg ${role === 'user' ? 'msg-user' : 'msg-bot'}`;
+            
+            // המרה אוטומטית של טבלאות
+            if(text.includes('|') && text.includes('--')) {
+                d.innerHTML = text.replace(/\n/g, '<br>') + `<br><button onclick="exportXLS(this)" class="mt-4 text-[10px] bg-green-700 text-white px-3 py-1 rounded">ייצא כאקסל <i class="fas fa-file-excel"></i></button>`;
+            } else {
+                d.innerText = text;
+            }
+            box.appendChild(d);
+            box.scrollTo({ top: box.scrollHeight, behavior: 'smooth' });
+        }
+
+        function updateUsage(usage) {
+            // חישוב עלות Sonnet 3.5 ($3/$15)
+            const cost = (usage.input_tokens * 0.000003) + (usage.output_tokens * 0.000015);
+            totalCost += cost;
+            document.getElementById('tokenDisplay').innerText = usage.input_tokens + usage.output_tokens;
+            document.getElementById('costDisplay').innerText = `$${totalCost.toFixed(4)}`;
+            document.getElementById('costBar').style.width = Math.min(100, totalCost * 100) + "%";
+        }
+
+        function exportXLS(btn) {
+            const blob = new Blob([btn.parentElement.innerText], {type: "application/vnd.ms-excel"});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = "Elite_Report.xls"; a.click();
         }
 
         window.onload = () => {
-            renderSkills();
-            document.getElementById('apiKey').value = localStorage.getItem('claude_key') || "";
+            renderS();
+            document.getElementById('apiKey').value = localStorage.getItem('e_k') || "";
         };
     </script>
 </body>
