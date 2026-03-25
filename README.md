@@ -2,143 +2,131 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Elite AI Management System</title>
+    <title>Elite AI - מערכת ניהול חכמה</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.2/mammoth.browser.min.js"></script>
     <style>
         :root { --gold: #c5a059; --dark: #2d1b0d; --cream: #f9f7f2; }
-        * { box-sizing: border-box; }
-        body, html { height: 100%; margin: 0; padding: 0; overflow: hidden; background-color: var(--cream); }
-        .sidebar { background-color: var(--dark); width: 300px; flex-shrink: 0; height: 100vh; color: white; }
-        .main-content { flex-grow: 1; height: 100vh; display: flex; flex-direction: column; background-color: var(--cream); }
-        .chat-area { flex-grow: 1; overflow-y: auto; padding: 2rem; display: flex; flex-direction: column; gap: 1rem; }
-        .gold-btn { background: var(--gold); color: white; border-radius: 8px; font-weight: bold; transition: 0.3s; }
-        .gold-btn:hover { background: #b38f48; transform: translateY(-1px); }
-        .message { padding: 1rem 1.5rem; border-radius: 15px; max-width: 80%; line-height: 1.6; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .message-bot { background: #f1ede4; border-right: 5px solid var(--dark); align-self: flex-start; }
-        .message-user { background: white; border-right: 5px solid var(--gold); align-self: flex-end; }
-        .input-panel { background: white; border-top: 4px solid var(--gold); padding: 1.5rem; }
+        html, body { height: 100vh; width: 100vw; margin: 0; padding: 0; overflow: hidden; background: var(--cream); }
+        .sidebar { width: 300px; background: var(--dark); height: 100vh; position: fixed; right: 0; top: 0; color: white; z-index: 50; }
+        .main-wrapper { margin-right: 300px; height: 100vh; display: flex; flex-direction: column; }
+        .header-api { background: white; border-bottom: 2px solid var(--gold); height: 70px; display: flex; align-items: center; justify-content: space-between; padding: 0 2rem; }
+        .chat-scroll { flex: 1; overflow-y: auto; padding: 2rem; display: flex; flex-direction: column; gap: 1.5rem; }
+        .input-box { background: white; border-top: 3px solid var(--gold); padding: 1.5rem; }
+        .msg { padding: 1rem; border-radius: 12px; max-width: 80%; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .msg-bot { background: #f1ede4; border-right: 5px solid var(--dark); align-self: flex-start; }
+        .msg-user { background: white; border-right: 5px solid var(--gold); align-self: flex-end; }
+        .gold-btn { background: var(--gold); color: white; padding: 0.75rem 2rem; border-radius: 8px; font-weight: bold; }
     </style>
 </head>
-<body class="flex">
+<body>
 
-    <aside class="sidebar p-6 flex flex-col shadow-2xl">
-        <div class="text-center mb-8 border-b border-white/10 pb-6">
+    <aside class="sidebar p-6 shadow-2xl">
+        <div class="text-center mb-10 border-b border-white/10 pb-6">
             <h1 class="text-3xl font-bold" style="color: var(--gold)">Elite BMS</h1>
-            <p class="text-[10px] uppercase tracking-widest text-gray-400">AI Enterprise System</p>
+            <p class="text-[10px] uppercase tracking-widest text-gray-400">Enterprise AI</p>
         </div>
 
-        <div class="mb-6">
-            <label class="text-xs text-gold/80 block mb-2 font-bold tracking-wider">סקיל פעיל</label>
-            <select id="activeSkill" class="w-full bg-white/10 border border-white/20 p-3 rounded-lg text-sm text-white outline-none focus:ring-1 focus:ring-gold">
+        <div class="mb-8">
+            <label class="text-xs text-gold/80 block mb-2 font-bold">סקיל מומחה פעיל:</label>
+            <select id="activeSkill" class="w-full bg-white/10 border border-white/20 p-3 rounded-lg text-sm text-white">
                 <option value="">צ'אט כללי</option>
             </select>
-            <button onclick="openSkillModal()" class="w-full mt-4 text-[11px] py-2 border border-dashed border-gold/40 rounded-lg text-gold hover:bg-gold/10 transition-all">
-                <i class="fas fa-magic ml-1"></i> צור סקיל מומחה חדש
+            <button onclick="openSkillModal()" class="w-full mt-4 text-[11px] py-2 border border-dashed border-gold/40 rounded-lg text-gold hover:bg-gold/10">
+                <i class="fas fa-plus-circle ml-1"></i> צור סקיל מומחה
             </button>
         </div>
 
-        <nav class="flex-1 space-y-2 overflow-y-auto">
+        <nav class="space-y-3 flex-1">
             <button onclick="location.reload()" class="w-full text-right p-3 rounded-lg hover:bg-white/5 flex items-center gap-3">
-                <i class="fas fa-plus text-gold"></i> שיחה חדשה
-            </button>
-            <button class="w-full text-right p-3 rounded-lg hover:bg-white/5 flex items-center gap-3">
-                <i class="fas fa-folder-open text-gold"></i> ארכיון דוחות
+                <i class="fas fa-redo text-gold"></i> אתחול שיחה
             </button>
         </nav>
 
-        <div class="mt-auto p-4 bg-black/30 rounded-xl border border-white/5">
-            <div class="flex justify-between text-[10px] mb-2 font-bold"><span>עלות שימוש:</span><span id="costDisplay">$0.00</span></div>
+        <div class="p-4 bg-black/30 rounded-xl border border-white/5">
+            <div class="flex justify-between text-[10px] mb-2 font-bold uppercase"><span>צריכת תקציב:</span><span id="costDisplay">$0.00</span></div>
             <div class="w-full bg-gray-700 h-1.5 rounded-full overflow-hidden">
                 <div id="costBar" class="bg-gold h-full w-0 transition-all duration-500"></div>
             </div>
         </div>
     </aside>
 
-    <main class="main-content">
-        <header class="h-20 bg-white border-b flex items-center justify-between px-10 shadow-sm">
+    <div class="main-wrapper">
+        <header class="header-api shadow-sm">
             <div>
-                <h2 class="text-xl font-bold text-gray-800">ממשק עבודה חכם</h2>
-                <div id="skillIndicator" class="text-[10px] text-gray-400 font-bold uppercase">Mode: Default</div>
+                <h2 class="font-bold text-gray-800">לוח בקרה חכם</h2>
+                <p id="skillNameDisplay" class="text-[10px] text-gray-400 font-bold">מצב: צ'אט רגיל</p>
             </div>
-            <div class="flex items-center gap-6">
-                <input type="password" id="apiKey" class="text-xs border-2 border-gray-100 p-2 rounded-lg w-64 focus:border-gold outline-none" placeholder="מפתח קלוד (sk-ant-...)">
-                <div class="w-10 h-10 rounded-full bg-gold/10 flex items-center justify-center text-gold border border-gold/20 shadow-sm"><i class="fas fa-crown"></i></div>
+            <div class="flex items-center gap-4 bg-gray-50 p-2 rounded-xl border border-gray-200">
+                <span class="text-xs font-bold text-gray-500 mr-2">מפתח API:</span>
+                <input type="password" id="apiKey" class="text-sm bg-transparent outline-none w-64" placeholder="הכנס מפתח sk-ant-...">
+                <i class="fas fa-key text-gold"></i>
             </div>
         </header>
 
-        <div id="chatBox" class="chat-area">
-            <div class="message message-bot">
+        <div id="chatBox" class="chat-scroll">
+            <div class="msg msg-bot">
                 <b>שלום יוחנן,</b><br>
-                המערכת פועלת כעת במצב מסך מלא. תוכל להעלות קבצים לניתוח מהיר, או להפעיל סקיל שלמד מהקבצים שלך איך לעבוד.
+                המערכת מוכנה כעת במסך מלא. הזן את מפתח ה-API למעלה והתחל לעבוד. תוכל להעלות קבצים לניתוח מהיר או להשתמש בסקילים שלך.
             </div>
         </div>
 
-        <div class="input-panel">
+        <div class="input-box">
             <div class="max-w-5xl mx-auto flex flex-col gap-3">
-                <div id="fileStatus" class="hidden text-xs font-bold text-gold"><i class="fas fa-check-circle ml-1"></i> קובץ מוכן לשליחה</div>
+                <div id="fileStatus" class="hidden text-xs font-bold text-gold"><i class="fas fa-paperclip ml-1"></i> קובץ נטען לזיכרון</div>
                 <div class="flex gap-4 items-end">
                     <input type="file" id="mainFile" class="hidden" onchange="handleMainFile(this)">
-                    <button onclick="document.getElementById('mainFile').click()" class="p-4 bg-gray-100 rounded-xl hover:bg-gray-200 text-gray-500 transition-colors shadow-inner">
-                        <i class="fas fa-paperclip text-xl"></i>
+                    <button onclick="document.getElementById('mainFile').click()" class="p-4 bg-gray-100 rounded-xl hover:bg-gray-200 text-gray-400 shadow-inner">
+                        <i class="fas fa-upload text-xl"></i>
                     </button>
-                    <textarea id="userInput" class="flex-1 p-4 border-2 border-gray-100 rounded-xl focus:border-gold outline-none shadow-sm transition-all resize-none" rows="1" placeholder="כתוב פקודה או שאלה..."></textarea>
-                    <button onclick="sendMessage()" class="gold-btn px-12 py-4 shadow-lg text-lg flex items-center gap-2">
+                    <textarea id="userInput" class="flex-1 p-4 border-2 border-gray-100 rounded-xl focus:border-gold outline-none shadow-sm transition-all resize-none" rows="1" placeholder="כתוב שאלה או פקודה..."></textarea>
+                    <button onclick="sendMessage()" class="gold-btn shadow-lg flex items-center gap-2">
                         <span>שלח</span> <i class="fas fa-paper-plane"></i>
                     </button>
                 </div>
             </div>
         </div>
-    </main>
+    </div>
 
-    <div id="skillModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center backdrop-blur-sm z-[100] p-4">
-        <div class="bg-white rounded-2xl p-8 w-[600px] shadow-2xl border-t-8 border-gold max-h-[90vh] overflow-y-auto">
-            <h3 class="text-2xl font-bold mb-2">הגדרת סקיל חכם</h3>
-            <p class="text-sm text-gray-500 mb-6">קלוד יציית אך ורק לכללים ולידע שתזין כאן.</p>
+    <div id="skillModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center backdrop-blur-sm z-[200] p-4">
+        <div class="bg-white rounded-2xl p-10 w-[600px] shadow-2xl border-t-8 border-gold max-h-[90vh] overflow-y-auto">
+            <h3 class="text-2xl font-bold mb-2">הגדרת סקיל מומחה</h3>
+            <p class="text-sm text-gray-500 mb-8">המערכת תציית אך ורק לכללים שתגדיר כאן.</p>
             
-            <label class="block text-sm font-bold mb-2">שם הסקיל</label>
-            <input id="sName" class="w-full border-2 border-gray-100 p-3 rounded-xl mb-4 outline-none focus:border-gold" placeholder="למשל: מנתח פרויקטים ארט-קיר">
+            <label class="block text-sm font-bold mb-1">שם הסקיל (למשל: מנתח אקסל)</label>
+            <input id="sName" class="w-full border-2 p-3 rounded-lg mb-4 outline-none focus:border-gold" placeholder="תן שם לסקיל...">
             
-            <label class="block text-sm font-bold mb-2">הנחיות קבועות</label>
-            <textarea id="sPrompt" class="w-full border-2 border-gray-100 p-3 rounded-xl mb-4 outline-none focus:border-gold h-32" placeholder="מה התפקיד שלו? איך עליו לענות?"></textarea>
+            <label class="block text-sm font-bold mb-1">הוראות יסוד (System Prompt)</label>
+            <textarea id="sPrompt" class="w-full border-2 p-3 rounded-lg mb-4 h-32 outline-none focus:border-gold" placeholder="הגדר את תפקיד הסקיל..."></textarea>
             
-            <label class="block text-sm font-bold mb-2">קבצי ידע (לימוד הסקיל)</label>
-            <input type="file" id="skillFiles" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:bg-gold/10 file:text-gold hover:file:bg-gold/20 mb-6" multiple onchange="processSkillFiles(this)">
+            <label class="block text-sm font-bold mb-1">העלה קבצי ידע ללימוד</label>
+            <input type="file" id="skillFiles" class="block w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-gold/10 file:text-gold hover:file:bg-gold/20 mb-6" multiple onchange="processSkillFiles(this)">
             <div id="skillLoadStatus" class="text-xs text-green-600 font-bold mb-4"></div>
 
-            <div class="flex justify-end gap-4">
+            <div class="flex justify-end gap-4 mt-4">
                 <button onclick="closeSkillModal()" class="text-gray-400 font-bold">ביטול</button>
-                <button onclick="saveSkill()" class="gold-btn px-8 py-2">שמור סקיל</button>
+                <button onclick="saveSkill()" class="gold-btn px-8 py-2">שמור והפעל</button>
             </div>
         </div>
     </div>
 
     <script>
-        // הגדרת פונקציות גלובליות מיד כדי למנוע ReferenceError
-        let skills = JSON.parse(localStorage.getItem('elite_bms_skills') || '[]');
-        let currentFileContext = "";
+        // אתחול גלובלי
+        let skills = JSON.parse(localStorage.getItem('elite_bms_vfinal_skills') || '[]');
         let skillKnowledge = "";
+        let currentFileData = "";
         let totalCost = 0;
 
-        function openSkillModal() { 
-            document.getElementById('skillModal').classList.remove('hidden'); 
-        }
-
-        function closeSkillModal() { 
-            document.getElementById('skillModal').classList.add('hidden'); 
-        }
+        function openSkillModal() { document.getElementById('skillModal').classList.remove('hidden'); }
+        function closeSkillModal() { document.getElementById('skillModal').classList.add('hidden'); }
 
         function renderSkills() {
-            const select = document.getElementById('activeSkill');
-            select.innerHTML = '<option value="">צ\'אט כללי</option>';
+            const sel = document.getElementById('activeSkill');
+            sel.innerHTML = '<option value="">צ\'אט כללי</option>';
             skills.forEach((s, i) => {
-                const opt = document.createElement('option');
-                opt.value = i;
-                opt.innerText = s.name;
-                select.appendChild(opt);
+                sel.innerHTML += `<option value="${i}">${s.name}</option>`;
             });
         }
 
@@ -155,9 +143,9 @@
         function saveSkill() {
             const name = document.getElementById('sName').value;
             const prompt = document.getElementById('sPrompt').value;
-            if(!name || !prompt) return alert("חובה למלא שם והנחיות");
+            if(!name || !prompt) return alert("מלא שם והנחיות");
             skills.push({ name, prompt, knowledge: skillKnowledge });
-            localStorage.setItem('elite_bms_skills', JSON.stringify(skills));
+            localStorage.setItem('elite_bms_vfinal_skills', JSON.stringify(skills));
             renderSkills();
             closeSkillModal();
             skillKnowledge = "";
@@ -168,22 +156,22 @@
             const key = document.getElementById('apiKey').value || localStorage.getItem('claude_key');
             const skillIdx = document.getElementById('activeSkill').value;
 
-            if(!input.value.trim() && !currentFileContext) return;
-            if(!key) return alert("נא להזין מפתח API");
+            if(!input.value.trim() && !currentFileData) return;
+            if(!key) return alert("הזן מפתח API למעלה");
             localStorage.setItem('claude_key', key);
 
-            let systemPrompt = "You are a professional business manager.";
+            let systemMsg = "You are a professional business system.";
             if(skillIdx !== "") {
                 const s = skills[skillIdx];
-                systemPrompt = `STRICT RULES: ${s.prompt}\nKNOWLEDGE: ${s.knowledge}\nFollow these instructions ONLY.`;
-                document.getElementById('skillIndicator').innerText = `Mode: ${s.name}`;
+                systemMsg = `STRICT RULE: ${s.prompt}\nKNOWLEDGE: ${s.knowledge}\nFOLLOW ONLY THESE RULES.`;
+                document.getElementById('skillNameDisplay').innerText = `מצב: ${s.name}`;
             }
 
-            appendMessage('user', input.value);
-            const prompt = currentFileContext ? `DATA:\n${currentFileContext}\n\nUSER:${input.value}` : input.value;
+            appendMsg('user', input.value);
+            const userContent = currentFileData ? `DATA:\n${currentFileData}\n\nUSER:${input.value}` : input.value;
             
             input.value = "";
-            currentFileContext = "";
+            currentFileData = "";
             document.getElementById('fileStatus').classList.add('hidden');
 
             try {
@@ -193,16 +181,16 @@
                     body: JSON.stringify({
                         model: "claude-3-5-sonnet-20240620",
                         max_tokens: 4000,
-                        system: systemPrompt,
-                        messages: [{ role: "user", content: prompt }]
+                        system: systemMsg,
+                        messages: [{ role: "user", content: userContent }]
                     })
                 });
 
                 const data = await res.json();
-                appendMessage('bot', data.content[0].text);
+                appendMsg('bot', data.content[0].text);
                 updateStats(data.usage);
             } catch (e) {
-                appendMessage('bot', "שגיאה. וודא שאישרת גישה בכתובת https://cors-anywhere.herokuapp.com/corsdemo");
+                appendMsg('bot', "שגיאה בחיבור. בדוק שהפעלת גישה ב-https://cors-anywhere.herokuapp.com/corsdemo");
             }
         }
 
@@ -227,13 +215,13 @@
 
         async function handleMainFile(input) {
             document.getElementById('fileStatus').classList.remove('hidden');
-            currentFileContext = await readFileContent(input.files[0]);
+            currentFileData = await readFileContent(input.files[0]);
         }
 
-        function appendMessage(role, text) {
+        function appendMsg(role, text) {
             const box = document.getElementById('chatBox');
             const div = document.createElement('div');
-            div.className = `message ${role === 'user' ? 'message-user' : 'message-bot'}`;
+            div.className = `msg ${role === 'user' ? 'msg-user' : 'msg-bot'}`;
             
             if(text.includes('|') && text.includes('--')) {
                 div.innerHTML = text.replace(/\n/g, '<br>') + `<br><button onclick="downloadExcel(this)" class="mt-4 text-[10px] bg-green-700 text-white px-3 py-1 rounded">ייצא כאקסל <i class="fas fa-file-excel"></i></button>`;
@@ -259,7 +247,6 @@
             a.href = url; a.download = "Elite_BMS_Report.xls"; a.click();
         }
 
-        // הפעלה ראשונית
         window.onload = () => {
             renderSkills();
             document.getElementById('apiKey').value = localStorage.getItem('claude_key') || "";
