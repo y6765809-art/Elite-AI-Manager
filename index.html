@@ -1,133 +1,233 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <title>Elite AI Enterprise - Direct Master</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        :root { --gold: #c5a059; --dark: #2d1b0d; --cream: #f9f7f2; }
-        body, html { margin: 0; height: 100vh; width: 100vw; overflow: hidden; background: var(--cream); font-family: 'Segoe UI', sans-serif; }
-        .sidebar { position: fixed; right: 0; top: 0; bottom: 0; width: 300px; background: var(--dark); color: white; padding: 25px; z-index: 50; }
-        .main { margin-right: 300px; height: 100vh; display: flex; flex-direction: column; }
-        .header { height: 80px; background: white; border-bottom: 4px solid var(--gold); display: flex; align-items: center; justify-content: space-between; padding: 0 40px; }
-        .chat-box { flex: 1; overflow-y: auto; padding: 40px; display: flex; flex-direction: column; gap: 20px; }
-        .input-panel { background: white; border-top: 1px solid #eee; padding: 20px 40px; }
-        .msg { padding: 15px 25px; border-radius: 15px; max-width: 80%; box-shadow: 0 4px 10px rgba(0,0,0,0.05); font-size: 16px; }
-        .msg-bot { background: #f1ede4; border-right: 5px solid var(--dark); align-self: flex-start; }
-        .msg-user { background: white; border-right: 5px solid var(--gold); align-self: flex-end; }
-        .gold-btn { background: var(--gold); color: white; padding: 12px 35px; border-radius: 10px; font-weight: bold; cursor: pointer; border: none; transition: 0.3s; }
-        .gold-btn:hover { background: #b38f48; transform: translateY(-2px); }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>עט סופר Pro | Elite Edition</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Hebrew:wght@400;700;900&family=Heebo:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+<style>
+    :root {
+        --gold: #C8972A; --gold2: #E8B84B; --dark-ink: #1A0800; --cream: #FDFAF3;
+    }
+    body { font-family: 'Noto Serif Hebrew', serif; background-color: #f4f1ea; }
+    
+    /* תיקון המסך המלא - ביטול המגבלה שגרמה לזה להיראות קטן */
+    .app-wrapper { width: 100%; min-height: 100vh; display: flex; flex-direction: column; }
+    
+    .elite-card { 
+        background: white; border-radius: 12px; border-top: 5px solid var(--gold);
+        box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); margin-bottom: 2rem;
+    }
+    
+    .text-panel { height: 500px; overflow-y: auto; border: 1px solid #d4b87a; border-radius: 8px; background: white; padding: 20px; line-height: 2; font-size: 18px; }
+
+    /* עיצוב הטאבים העליונים */
+    .mode-tab { padding: 15px 25px; cursor: pointer; border-bottom: 3px solid transparent; transition: 0.3s; font-weight: bold; color: #666; }
+    .mode-tab.active { border-bottom-color: var(--gold); color: var(--dark-ink); background: rgba(200,151,42,0.05); }
+
+    /* Landing Page Overlay */
+    #landing-overlay { position: fixed; inset: 0; z-index: 9999; background: #0D0400; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.5s; }
+    #landing-overlay.hidden { opacity: 0; pointer-events: none; }
+</style>
 </head>
-<body class="flex">
+<body class="app-wrapper">
 
-    <aside class="sidebar shadow-2xl">
-        <div class="text-center mb-10 border-b border-white/10 pb-6">
-            <h1 class="text-3xl font-black text-gold" style="color:var(--gold)">Elite BMS</h1>
-            <p class="text-[9px] uppercase tracking-[4px] opacity-40">Direct Pro v8</p>
+<div id="landing-overlay">
+    <div class="text-center">
+        <h1 class="text-6xl font-black text-gold mb-4" style="color: #E8B84B">עט סופר</h1>
+        <p class="text-gold opacity-50 tracking-[5px] uppercase mb-12">Et Sofer Professional</p>
+        <div class="grid grid-cols-2 gap-4 max-w-2xl mx-auto">
+            <button onclick="enterApp('torah')" class="p-8 border border-gold/30 rounded-xl hover:bg-gold/10 transition group text-right">
+                <span class="text-2xl block mb-2">📜</span>
+                <span class="text-xl font-bold text-gold2">לשון קודש תורנית</span>
+                <p class="text-xs text-gray-500 mt-2">עריכה לסגנון ספרי קודש, שיוף לשון ופיסוק מדויק</p>
+            </button>
+            <button onclick="enterApp('heb')" class="p-8 border border-gold/30 rounded-xl hover:bg-gold/10 transition group text-right">
+                <span class="text-2xl block mb-2">✍️</span>
+                <span class="text-xl font-bold text-gold2">עברית מקצועית</span>
+                <p class="text-xs text-gray-500 mt-2">מאמרים, שיעורים וחומר רבני מודרני בעברית רהוטה</p>
+            </button>
         </div>
-        <div class="p-4 bg-black/20 rounded-xl mb-6">
-            <p class="text-[10px] text-gold font-bold mb-2">סטטוס מערכת:</p>
-            <div id="status" class="text-xs text-gray-400">מוכן לעבודה</div>
+    </div>
+</div>
+
+<header class="bg-dark-ink text-white p-4 border-b-4 border-gold flex justify-between items-center px-12" style="background: #1A0800">
+    <div class="flex items-center gap-4">
+        <div class="w-10 h-10 bg-gold rounded-full flex items-center justify-center text-xl font-bold">✒</div>
+        <h1 class="text-2xl font-black">עט סופר <span class="text-gold text-xs ml-2 uppercase">Pro Edition</span></h1>
+    </div>
+    <div class="flex gap-4">
+        <input type="password" id="apiKey" class="bg-white/10 border border-white/20 rounded p-2 text-xs w-64 outline-none focus:border-gold" placeholder="הכנס מפתח קלוד (sk-ant-...)">
+        <button onclick="saveKey()" class="bg-gold text-white px-4 py-2 rounded font-bold hover:bg-gold2 transition">שמור מפתח</button>
+    </div>
+</header>
+
+<main class="flex-1 p-8">
+    <div class="w-full flex gap-4 mb-8 border-b border-gray-300">
+        <div class="mode-tab active" onclick="switchMode('torah', this)">📜 לשון קודש תורנית</div>
+        <div class="mode-tab" onclick="switchMode('heb', this)">✍ עברית מקצועית</div>
+    </div>
+
+    <div class="grid grid-cols-12 gap-8">
+        <div class="col-span-3">
+            <div class="elite-card p-6">
+                <h3 class="font-bold border-b mb-4 pb-2"><i class="fas fa-file-upload ml-2 text-gold"></i>העלאת מסמך</h3>
+                <div id="dropZone" class="border-2 border-dashed border-gold/30 rounded-lg p-8 text-center cursor-pointer hover:bg-gold/5 transition">
+                    <i class="fas fa-cloud-upload-alt text-4xl text-gold/30 mb-4"></i>
+                    <p class="text-sm font-bold">גרור קובץ Word לכאן</p>
+                    <input type="file" id="fileInput" class="hidden" accept=".docx">
+                </div>
+                <div id="chapterList" class="mt-6 space-y-2 max-h-96 overflow-y-auto">
+                    </div>
+            </div>
         </div>
-        <button onclick="location.reload()" class="w-full text-right p-3 rounded-lg hover:bg-white/5 flex items-center gap-3">
-            <i class="fas fa-sync-alt text-gold"></i> רענן מערכת
-        </button>
-    </aside>
 
-    <div class="main">
-        <header class="header shadow-sm">
-            <div>
-                <h2 class="text-xl font-bold">לוח בקרה חכם</h2>
-                <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Master Intelligence</p>
-            </div>
-            <div class="flex items-center gap-4 bg-gray-50 p-2 px-5 rounded-2xl border-2">
-                <span class="text-xs font-bold text-gray-400">API KEY:</span>
-                <input type="password" id="apiKey" class="text-sm bg-transparent outline-none w-72" placeholder="sk-ant-...">
-            </div>
-        </header>
+        <div class="col-span-9">
+            <div class="elite-card p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold">עיבוד ועריכה חכמה</h3>
+                    <div class="flex gap-2">
+                        <button onclick="startProcessing()" class="bg-gold text-white px-8 py-3 rounded-lg font-bold shadow-lg hover:scale-105 transition active:scale-95">
+                            <i class="fas fa-bolt ml-2"></i>התחל עריכה
+                        </button>
+                        <button onclick="exportWord()" class="bg-green-700 text-white px-6 py-3 rounded-lg font-bold hover:bg-green-800 transition">
+                            <i class="fas fa-file-word ml-2"></i>ייצוא ל-Word
+                        </button>
+                    </div>
+                </div>
 
-        <div id="chatBox" class="chat-box">
-            <div class="msg msg-bot">
-                <b>שלום יוחנן,</b><br>
-                המערכת מוגדרת כעת לעבודה **ישירה** מול קלוד. <br>
-                וודא שתוסף ה-CORS דולק בדפדפן, הכנס את המפתח למעלה ושלח הודעה.
-            </div>
-        </div>
+                <div class="grid grid-cols-2 gap-6">
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 block mb-2 uppercase">טקסט מקור</label>
+                        <div id="sourceText" class="text-panel bg-gray-50"></div>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 block mb-2 uppercase">תוצאה מעובדת</label>
+                        <div id="resultText" contenteditable="true" class="text-panel shadow-inner"></div>
+                    </div>
+                </div>
 
-        <div class="input-panel">
-            <div class="max-w-5xl mx-auto flex gap-5">
-                <textarea id="uInput" class="flex-1 p-4 border-2 border-gray-100 rounded-xl focus:border-gold outline-none resize-none shadow-sm" rows="1" placeholder="כתוב שאלה או פקודה..."></textarea>
-                <button onclick="send()" id="sendBtn" class="gold-btn flex items-center gap-2">
-                    <span>שלח</span> <i class="fas fa-bolt"></i>
-                </button>
+                <div id="progressContainer" class="hidden mt-8">
+                    <div class="flex justify-between text-xs font-bold mb-2">
+                        <span id="statusText">מעבד נתונים...</span>
+                        <span id="percentText">0%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 h-2 rounded-full overflow-hidden">
+                        <div id="progressBar" class="bg-gold h-full w-0 transition-all duration-500"></div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
+</main>
 
-    <script>
-        async function send() {
-            const input = document.getElementById('uInput');
-            const key = document.getElementById('apiKey').value || localStorage.getItem('e_k');
-            const btn = document.getElementById('sendBtn');
-            const status = document.getElementById('status');
+<script>
+    let currentChapters = [];
+    let currentResults = {};
+    let activeMode = 'torah';
 
-            if(!input.value.trim() || !key) return alert("הזן הודעה ומפתח API");
+    function enterApp(mode) {
+        activeMode = mode;
+        document.getElementById('landing-overlay').classList.add('hidden');
+    }
+
+    function switchMode(mode, el) {
+        activeMode = mode;
+        document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+        el.classList.add('active');
+    }
+
+    function saveKey() {
+        const key = document.getElementById('apiKey').value;
+        if(key) {
+            localStorage.setItem('claude_api_key', key);
+            alert('המפתח נשמר בהצלחה');
+        }
+    }
+
+    // --- לוגיקה של הקבצים ---
+    const fileInput = document.getElementById('fileInput');
+    const dropZone = document.getElementById('dropZone');
+
+    dropZone.onclick = () => fileInput.click();
+    fileInput.onchange = (e) => handleFile(e.target.files[0]);
+
+    async function handleFile(file) {
+        if(!file) return;
+        const arrayBuffer = await file.arrayBuffer();
+        const result = await mammoth.extractRawText({arrayBuffer});
+        const text = result.value;
+        
+        // פיצול לפרקים לפי המרקר @@ או לפי פרק/סימן
+        currentChapters = text.split(/@@|פרק|סימן/).filter(t => t.trim().length > 10);
+        renderChapters();
+    }
+
+    function renderChapters() {
+        const list = document.getElementById('chapterList');
+        list.innerHTML = currentChapters.map((ch, i) => `
+            <div class="p-3 border rounded mb-2 hover:bg-gold/5 cursor-pointer transition text-sm flex justify-between items-center" onclick="loadChapter(${i})">
+                <span class="truncate ml-2">פרק ${i+1}: ${ch.substring(0, 30)}...</span>
+                <i id="status-${i}" class="fas fa-circle text-gray-200 text-[8px]"></i>
+            </div>
+        `).join('');
+    }
+
+    function loadChapter(i) {
+        document.getElementById('sourceText').innerText = currentChapters[i];
+        document.getElementById('resultText').innerText = currentResults[i] || "";
+    }
+
+    // --- לוגיקה של ה-API עם תיקון CORS ---
+    async function startProcessing() {
+        const key = document.getElementById('apiKey').value || localStorage.getItem('claude_api_key');
+        if(!key) return alert("יש להזין מפתח API");
+
+        document.getElementById('progressContainer').classList.remove('hidden');
+        
+        for(let i=0; i < currentChapters.length; i++) {
+            updateProgress(i, currentChapters.length);
             
-            localStorage.setItem('e_k', key);
-            const text = input.value;
-            addMsg('user', text);
-            input.value = "";
-            btn.disabled = true;
-            status.innerHTML = "<span class='text-yellow-500 font-bold'>מתקשר עם קלוד...</span>";
+            const prompt = activeMode === 'torah' 
+                ? "אתה עורך תורני מומחה. שכתב את הטקסט הבא ללשון קודש צחה, ללא ארמית מודרנית, עם פיסוק נכון ומראי מקומות בסוגריים:"
+                : "שכתב את הטקסט הבא לעברית מקצועית, רהוטה וקולחת:";
 
             try {
-                // שליחה ישירה ללא פרוקסי - מחייב תוסף CORS מופעל
-                const response = await fetch("https://api.anthropic.com/v1/messages", {
+                // שימוש ב-CORS Proxy כגיבוי או ישירות אם מותקן תוסף
+                const response = await fetch("https://cors-anywhere.herokuapp.com/https://api.anthropic.com/v1/messages", {
                     method: 'POST',
-                    headers: { 
-                        'x-api-key': key, 
-                        'anthropic-version': '2023-06-01', 
-                        'content-type': 'application/json',
-                        'dangerously-allow-browser': 'true' 
+                    headers: {
+                        'x-api-key': key,
+                        'anthropic-version': '2023-06-01',
+                        'content-type': 'application/json'
                     },
                     body: JSON.stringify({
                         model: "claude-3-5-sonnet-20240620",
                         max_tokens: 4000,
-                        messages: [{ role: "user", content: text }]
+                        messages: [{ role: "user", content: prompt + "\n\n" + currentChapters[i] }]
                     })
                 });
 
                 const data = await response.json();
-                
-                if(data.error) {
-                    addMsg('bot', "שגיאת API: " + data.error.message);
-                    status.innerHTML = "<span class='text-red-500'>שגיאה במפתח</span>";
-                } else {
-                    addMsg('bot', data.content[0].text);
-                    status.innerHTML = "<span class='text-green-500 font-bold'>מחובר ותקין</span>";
+                if(data.content) {
+                    currentResults[i] = data.content[0].text;
+                    document.getElementById(`status-${i}`).classList.remove('text-gray-200');
+                    document.getElementById(`status-${i}`).classList.add('text-green-500');
+                    if(i === 0) loadChapter(0); // הצגת התוצאה הראשונה מיד
                 }
-            } catch (e) {
-                addMsg('bot', "שגיאת תקשורת. וודא שתוסף ה-CORS מופעל (צבעוני) בדפדפן.");
-                status.innerHTML = "<span class='text-red-500 font-bold'>חסימת דפדפן</span>";
-            } finally {
-                btn.disabled = false;
+            } catch (error) {
+                console.error("Error processing chapter", i, error);
             }
         }
+        updateProgress(currentChapters.length, currentChapters.length);
+        alert("העריכה הושלמה!");
+    }
 
-        function addMsg(role, text) {
-            const box = document.getElementById('chatBox');
-            const div = document.createElement('div');
-            div.className = `msg ${role === 'user' ? 'msg-user' : 'msg-bot'}`;
-            div.innerText = text;
-            box.appendChild(div);
-            box.scrollTo({ top: box.scrollHeight, behavior: 'smooth' });
-        }
-
-        window.onload = () => {
-            document.getElementById('apiKey').value = localStorage.getItem('e_k') || "";
-        };
-    </script>
-</body>
-</html>
+    function updateProgress(current, total) {
+        const pct
