@@ -1,73 +1,112 @@
-<!DOCTYPE html>
-<html lang="he" dir="rtl">
-<head>
-<meta charset="UTF-8">
-<title>Elite AI</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<style>
-body {margin:0; font-family:sans-serif; background:#f5f5f5;}
-.chat {height:80vh; overflow:auto; padding:20px;}
-.msg {padding:10px; margin:10px; border-radius:10px;}
-.user {background:#d1e7ff;}
-.bot {background:#fff;}
-</style>
-</head>
+import express from "express";
+import fetch from "node-fetch";
+import multer from "multer";
+import fs from "fs";
 
-<body>
+const app = express();
+const upload = multer({ dest: "uploads/" });
 
-<div class="chat" id="chat"></div>
+const API_KEY = process.env.CLAUDE_API_KEY;
 
-<div style="padding:10px;">
-<input id="input" placeholder="כתוב..." style="width:60%;">
-<input type="file" id="file">
-<button onclick="send()">שלח</button>
-<button onclick="upload()">קובץ</button>
-</div>
+app.use(express.json());
 
-<script>
+// ===== FRONTEND בתוך השרת =====
+app.get("/", (req, res) => {
+  res.send(`
+  <!DOCTYPE html>
+  <html>
+  <body>
 
-let skills = JSON.parse(localStorage.getItem('skills') || '[]');
+  <h2>Elite AI 🔥</h2>
 
-function add(role, text){
-  const d = document.createElement("div");
-  d.className = "msg " + role;
-  d.innerText = text;
-  chat.appendChild(d);
-  chat.scrollTop = chat.scrollHeight;
-}
+  <input id="msg">
+  <button onclick="send()">שלח</button>
 
-async function send(){
-  const text = input.value;
-  add("user", text);
+  <br><br>
 
-  const res = await fetch("http://localhost:3000/chat", {
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
+  <input type="file" id="file">
+  <button onclick="upload()">קובץ</button>
+
+  <pre id="out"></pre>
+
+  <script>
+  async function send(){
+    const res = await fetch("/chat", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({
+        message: msg.value,
+        system: "ענה מקצועי"
+      })
+    });
+
+    const d = await res.json();
+    out.innerText += "\\n\\n🤖 " + d.content[0].text;
+  }
+
+  async function upload(){
+    const fd = new FormData();
+    fd.append("file", file.files[0]);
+
+    const res = await fetch("/upload", {
+      method:"POST",
+      body: fd
+    });
+
+    const d = await res.json();
+    out.innerText += "\\n\\n📄 " + d.content[0].text;
+  }
+  </script>
+
+  </body>
+  </html>
+  `);
+});
+
+// ===== CHAT =====
+app.post("/chat", async (req, res) => {
+  const { message, system } = req.body;
+
+  const r = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "x-api-key": API_KEY,
+      "anthropic-version": "2023-06-01",
+      "content-type": "application/json"
+    },
     body: JSON.stringify({
-      message: text,
-      system: "ענה מקצועי"
+      model: "claude-3-5-sonnet-20240620",
+      max_tokens: 2000,
+      system,
+      messages: [{ role: "user", content: message }]
     })
   });
 
-  const data = await res.json();
-  add("bot", data.content[0].text);
-}
+  res.json(await r.json());
+});
 
-async function upload(){
-  const f = file.files[0];
-  const fd = new FormData();
-  fd.append("file", f);
+// ===== FILE =====
+app.post("/upload", upload.single("file"), async (req, res) => {
+  const content = fs.readFileSync(req.file.path, "utf-8");
 
-  const res = await fetch("http://localhost:3000/upload", {
-    method:"POST",
-    body: fd
+  const r = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "x-api-key": API_KEY,
+      "anthropic-version": "2023-06-01",
+      "content-type": "application/json"
+    },
+    body: JSON.stringify({
+      model: "claude-3-5-sonnet-20240620",
+      max_tokens: 2000,
+      messages: [{
+        role: "user",
+        content: \`נתח את הקובץ:\\n\${content}\`
+      }]
+    })
   });
 
-  const data = await res.json();
-  add("bot", data.content[0].text);
-}
+  res.json(await r.json());
+});
 
-</script>
-
-</body>
-</html>
+app.listen(3000, () => console.log("🔥 http://localhost:3000"));
